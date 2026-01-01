@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Keep global resets minimal so Tailwind Preflight can work
+   Avoid forcing body layout here (done in components) */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: white;
+  color: #111827;
+}
