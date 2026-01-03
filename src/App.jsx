@@ -18,7 +18,10 @@ import InfoScreen from "./components/InfoScreen";
 import CartScreen from "./components/CartScreen";
 import CheckoutScreen from "./components/CheckoutScreen";
 import HistoryScreen from "./components/HistoryScreen";
-import { destinations } from "./data/mockData";
+import EditProfileScreen from "./components/EditProfileScreen";
+import MyReviewsScreen from "./components/MyReviewsScreen";
+import TransactionDetailScreen from "./components/TransactionDetailScreen";
+// Removed mock destinations import
 
 // Admin Components
 import AdminLogin from "./pages/admin/Login";
@@ -47,28 +50,89 @@ function App() {
   const [session, setSession] = useState(null);
   const [authMode, setAuthMode] = useState("login");
 
-  // Initialize transactions from localStorage
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const saved = localStorage.getItem("transactions");
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // Initialize transactions state
+  const [transactions, setTransactions] = useState([]);
+  const [destinations, setDestinations] = useState([]);
 
   const location = useLocation();
 
   useEffect(() => {
-    localStorage.setItem("transactions", JSON.stringify(transactions));
-  }, [transactions]);
+    fetchDestinations();
+  }, []);
+
+  const fetchDestinations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) throw error;
+      setDestinations(data || []);
+    } catch (e) {
+      console.error("Error loading destinations:", e);
+    }
+  };
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    // Only fetch transactions if user is logged in
+    if (session) {
+      fetchTransactions();
+    } else {
+      setTransactions([]);
+    }
+  }, [session]);
 
+  const fetchTransactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(
+          `
+          *,
+          transaction_items (
+            *,
+            product:products (name, image_url)
+          )
+        `
+        )
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Map Supabase columns to App state structure
+      const mappedTransactions = data.map((t) => ({
+        id: t.id,
+        date: t.created_at,
+        status:
+          t.status === "pending"
+            ? "Menunggu"
+            : t.status === "paid"
+            ? "Dibayar"
+            : "Selesai",
+        total: t.total_amount,
+        items: t.transaction_items.map((item) => ({
+          name: item.product?.name || "Produk",
+          quantity: item.quantity,
+          price: item.price_at_purchase,
+          image: item.product?.image_url,
+        })),
+        shipping_address: t.shipping_address,
+        phone: t.shipping_phone,
+      }));
+
+      setTransactions(mappedTransactions);
+    } catch (e) {
+      console.error("Error loading transactions:", e);
+    }
+  };
+
+  useEffect(() => {
+    // Determine auth mode from URL or other logic if needed
+    // This existing useEffect for session is fine, but we removed localStorage logic
+  }, []);
+
+  useEffect(() => {
     // Listen for auth changes
     const {
       data: { subscription },
@@ -112,22 +176,59 @@ function App() {
     setActiveTab("profile");
   };
 
-  const handleCheckoutSuccess = (orderData) => {
-    const newOrder = {
-      id: Date.now(),
-      date: new Date().toISOString(),
-      status: "Berhasil",
-      // If orderData is just an event or empty, use cart. But usually checkout passes data.
-      // CheckoutScreen passes nothing onConfirm based on current code, so we use cart state.
-      items: [...cart],
-      total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      ...orderData,
-    };
-    setTransactions((prev) => [...prev, newOrder]);
-    setCart([]);
-    setActiveTab("home");
+  const handleCheckoutSuccess = async (orderData) => {
+    if (!session) {
+      alert("Silakan login untuk memesan.");
+      setActiveTab("profile");
+      return;
+    }
+
+    console.log("Processing Checkout with Data:", orderData); // DEBUG LOG
+
+    const totalAmount = cart.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    try {
+      const { data, error } = await supabase.rpc("process_checkout", {
+        p_user_id: session.user.id,
+        p_total_amount: totalAmount,
+        p_shipping_address: orderData.address,
+        p_shipping_phone: orderData.phone,
+        p_items: cart.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          name: item.name,
+        })),
+      });
+
+      if (error) throw error;
+
+      // Optimistic update
+      // RPC returns { transaction_id: ..., status: ... }
+      // We reconstruct the full object for local state
+      const newOrder = {
+        id: data.transaction_id,
+        date: new Date().toISOString(),
+        status: "Menunggu",
+        total: totalAmount,
+        items: [...cart],
+        ...orderData,
+      };
+
+      setTransactions((prev) => [newOrder, ...prev]);
+      setCart([]);
+      setActiveTab("home");
+      // Optional: Show success toast
+    } catch (e) {
+      console.error("Checkout error:", e);
+      alert("Gagal memproses pesanan: " + e.message);
+    }
   };
 
+  // Keep handleScanSuccess
   const handleScanSuccess = (scannedData) => {
     console.log("Diterima di App.jsx:", scannedData);
     // Contoh data: "grobogan-app://spot/4"
@@ -186,9 +287,9 @@ function App() {
     setCart((prevCart) => prevCart.filter((item) => item.cartId !== cartId));
   };
 
-  const clearCart = () => {
+  const clearCart = (orderData) => {
     // This function is now a wrapper for handleCheckoutSuccess
-    handleCheckoutSuccess({});
+    handleCheckoutSuccess(orderData);
   };
 
   const handleLogout = async () => {
@@ -199,7 +300,18 @@ function App() {
     }
   };
 
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+
   const renderContent = () => {
+    if (selectedTransaction) {
+      return (
+        <TransactionDetailScreen
+          transaction={selectedTransaction}
+          onBack={() => setSelectedTransaction(null)}
+        />
+      );
+    }
+
     if (infoSpot) {
       return <InfoScreen spot={infoSpot} onBack={() => setInfoSpot(null)} />;
     }
@@ -234,7 +346,12 @@ function App() {
 
     switch (activeTab) {
       case "home":
-        return <HomeScreen onSelectSpot={setSelectedSpot} />;
+        return (
+          <HomeScreen
+            onSelectSpot={setSelectedSpot}
+            destinations={destinations}
+          />
+        );
       case "market":
         return <MarketplaceScreen addToCart={addToCart} />;
       case "profile":
@@ -243,6 +360,23 @@ function App() {
             session={session}
             onLogout={handleLogout}
             initialAuthMode={authMode}
+            onViewHistory={() => setActiveTab("history")}
+            onEditProfile={() => setActiveTab("edit-profile")}
+            onViewReviews={() => setActiveTab("my-reviews")}
+          />
+        );
+      case "edit-profile":
+        return (
+          <EditProfileScreen
+            session={session}
+            onBack={() => setActiveTab("profile")}
+          />
+        );
+      case "my-reviews":
+        return (
+          <MyReviewsScreen
+            session={session}
+            onBack={() => setActiveTab("profile")}
           />
         );
       case "cart":
@@ -261,6 +395,14 @@ function App() {
             cart={cart}
             onBack={() => setActiveTab("cart")}
             onConfrim={clearCart}
+          />
+        );
+      case "history":
+        return (
+          <HistoryScreen
+            history={transactions}
+            onBack={() => setActiveTab("profile")}
+            onSelectTransaction={setSelectedTransaction}
           />
         );
       default:

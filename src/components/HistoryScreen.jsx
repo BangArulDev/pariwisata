@@ -7,7 +7,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function HistoryScreen({ history, onBack }) {
+export default function HistoryScreen({
+  history,
+  onBack,
+  onSelectTransaction,
+}) {
   if (!history || history.length === 0) {
     return (
       <div className="pb-20 md:pb-8 max-w-2xl mx-auto w-full px-4 md:px-6 animate-slideUp">
@@ -57,6 +61,7 @@ export default function HistoryScreen({ history, onBack }) {
           .map((order) => (
             <div
               key={order.id}
+              onClick={() => onSelectTransaction && onSelectTransaction(order)}
               className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex justify-between items-start mb-3 border-b border-gray-50 pb-3">
@@ -90,20 +95,48 @@ export default function HistoryScreen({ history, onBack }) {
               </div>
 
               <div className="space-y-2 mb-4">
-                {order.items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center text-sm"
-                  >
-                    <span className="text-gray-700 font-medium line-clamp-1 flex-1">
-                      {item.quantity}x {item.name}
-                    </span>
-                    {/* <span>Rp {(item.price * item.quantity).toLocaleString()}</span> */}
-                  </div>
-                ))}
-                {order.items.length > 3 && (
-                  <p className="text-xs text-gray-400 italic">
-                    ...dan {order.items.length - 3} item lainnya
+                {order.items && order.items.length > 0 ? (
+                  <>
+                    {order.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex gap-3 items-center text-sm border-b border-gray-50 last:border-0 py-2"
+                      >
+                        {/* Image if available */}
+                        {item.image && (
+                          <div className="w-10 h-10 bg-gray-100 rounded-md overflow-hidden shrink-0">
+                            <img
+                              src={item.image}
+                              className="w-full h-full object-cover"
+                              alt={item.name}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <span className="text-gray-700 font-medium line-clamp-1">
+                            {item.name}
+                          </span>
+                          <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                            <span>
+                              {item.quantity} x Rp{" "}
+                              {item.price?.toLocaleString()}
+                            </span>
+                            <span className="font-semibold text-gray-500">
+                              Rp {(item.quantity * item.price).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {order.items.length > 3 && (
+                      <p className="text-xs text-gray-400 italic">
+                        ...dan {order.items.length - 3} item lainnya
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">
+                    Detail item tidak tersedia (Hanya tersimpan di struk fisik)
                   </p>
                 )}
               </div>

@@ -7,6 +7,7 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
@@ -38,6 +39,7 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
           options: {
             data: {
               full_name: name,
+              phone: phone,
             },
           },
         });
@@ -91,25 +93,43 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
 
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
-                  Nama Lengkap
-                </label>
-                <div className="relative">
-                  <User
-                    size={18}
-                    className="absolute left-3 top-3 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
-                    placeholder="Nama Lengkap Anda"
-                  />
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
+                    Nama Lengkap
+                  </label>
+                  <div className="relative">
+                    <User
+                      size={18}
+                      className="absolute left-3 top-3 text-gray-400"
+                    />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                      placeholder="Nama Lengkap Anda"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
+                    Nomor Telepon
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full pl-4 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                      placeholder="081234567890"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             <div>

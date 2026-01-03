@@ -11,18 +11,43 @@ import {
   Wallet,
 } from "lucide-react";
 import LoginScreen from "./LoginScreen";
+import { supabase } from "../supabaseClient";
 
 export default function ProfileScreen({
   session,
   onLogout,
   initialAuthMode = "login",
   onViewHistory,
+  onEditProfile,
+  onViewReviews,
 }) {
+  const [profile, setProfile] = React.useState(null);
+  const user = session?.user;
+
+  React.useEffect(() => {
+    if (!user) return;
+
+    async function getProfile() {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (data) {
+          setProfile(data);
+        }
+      } catch (e) {
+        console.error("Error loading profile:", e);
+      }
+    }
+    getProfile();
+  }, [user?.id]);
+
   if (!session) {
     return <LoginScreen initialMode={initialAuthMode} />;
   }
-
-  const user = session.user;
 
   const menuItems = [
     {
@@ -30,10 +55,14 @@ export default function ProfileScreen({
       label: "Riwayat Transaksi",
       action: onViewHistory,
     },
-    { icon: Star, label: "Ulasan Saya" },
+    { icon: Star, label: "Ulasan Saya", action: onViewReviews },
     { icon: Navigation, label: "Rute Tersimpan" },
     { icon: Info, label: "Bantuan & Dukungan" },
-    { icon: User, label: "Edit Profil" },
+    {
+      icon: User,
+      label: "Edit Profil",
+      action: onEditProfile,
+    },
     { icon: Menu, label: "Pengaturan" },
   ];
 
@@ -42,16 +71,34 @@ export default function ProfileScreen({
       <div className="p-4 md:p-0">
         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 md:flex md:items-center md:gap-8 mb-6 relative">
           <div className="flex items-center space-x-4 md:block md:text-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-green-100 rounded-full flex items-center justify-center text-4xl md:text-5xl shadow-inner border-4 border-white mx-auto text-green-700">
-              {user.email ? user.email[0].toUpperCase() : "U"}
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-green-100 rounded-full flex items-center justify-center text-4xl md:text-5xl shadow-inner border-4 border-white mx-auto text-green-700 overflow-hidden">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : profile?.full_name ? (
+                profile.full_name[0].toUpperCase()
+              ) : user.email ? (
+                user.email[0].toUpperCase()
+              ) : (
+                "U"
+              )}
             </div>
             <div className="md:mt-4">
               <h2 className="font-bold text-lg md:text-2xl text-gray-900 line-clamp-1">
-                {user.user_metadata?.full_name ||
+                {profile?.full_name ||
+                  user.user_metadata?.full_name ||
                   user.email?.split("@")[0] ||
                   "Pengguna"}
               </h2>
               <p className="text-xs md:text-sm text-gray-500">{user.email}</p>
+              {profile?.role === "admin" && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded">
+                  ADMIN
+                </span>
+              )}
             </div>
           </div>
           <div className="mt-4 md:mt-0 md:flex-1 md:border-l md:border-gray-100 md:pl-8">

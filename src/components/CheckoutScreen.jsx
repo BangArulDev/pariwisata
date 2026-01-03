@@ -20,9 +20,9 @@ export default function CheckoutScreen({ cart, onBack, onConfrim }) {
     e.preventDefault();
     setIsSuccess(true);
     // Simulate API call
-    setTimeout(() => {
-      onConfrim();
-    }, 2000);
+    // setTimeout(() => {
+    onConfrim(formData);
+    // }, 2000);
   };
 
   if (isSuccess) {

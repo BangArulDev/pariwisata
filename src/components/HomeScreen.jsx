@@ -7,10 +7,10 @@ import {
   Map as MapIcon,
   List,
 } from "lucide-react";
-import { destinations } from "../data/mockData";
+// import { destinations } from "../data/mockData";
 import MapScreen from "./MapScreen";
 
-export default function HomeScreen({ onSelectSpot }) {
+export default function HomeScreen({ onSelectSpot, destinations }) {
   const [viewMode, setViewMode] = useState("list");
 
   return (

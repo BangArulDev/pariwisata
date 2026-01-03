@@ -6,8 +6,10 @@ import {
   MapPin,
   Navigation,
   QrCode,
+  Star,
 } from "lucide-react";
 import { products } from "../data/mockData";
+import { ReviewList, ReviewForm } from "./ReviewComponents";
 
 export default function SpotDetail({
   spot,
@@ -146,6 +148,34 @@ export default function SpotDetail({
               <button className="flex-1 bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-lg flex justify-center items-center text-sm hover:bg-green-700 transition md:hidden">
                 Beli Tiket
               </button>
+            </div>
+
+            {/* Ulasan Section */}
+            <div className="mt-10 pt-8 border-t border-gray-100">
+              <h3 className="font-bold text-gray-800 text-lg mb-6 flex items-center">
+                <Star
+                  size={20}
+                  className="mr-2 text-yellow-500 fill-yellow-500"
+                />
+                Ulasan Pengunjung
+              </h3>
+
+              <div className="mb-8">
+                <ReviewForm
+                  destinationId={spot.id}
+                  onSaved={() => {
+                    // Trigger refresh if needed, usually simple refresh prop pattern
+                    // For now simplicity, we might force update or pass callback
+                    const event = new CustomEvent("review-updated");
+                    window.dispatchEvent(event);
+                  }}
+                />
+              </div>
+
+              <ReviewList
+                destinationId={spot.id}
+                refreshTrigger={window.location.href} // Minimal trigger hack or use custom state
+              />
             </div>
           </div>
         </div>
