@@ -6,6 +6,7 @@ export default function DesktopHeader({
   setActiveTab,
   cartCount,
   goToProfile,
+  goToCart,
 }) {
   return (
     <header className="hidden md:flex bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -50,10 +51,7 @@ export default function DesktopHeader({
           </nav>
         </div>
         <div className="flex items-center gap-6">
-          <div
-            className="relative cursor-pointer group"
-            onClick={() => setActiveTab("market")}
-          >
+          <div className="relative cursor-pointer group" onClick={goToCart}>
             <ShoppingBag
               className="text-gray-600 group-hover:text-green-700 transition-colors"
               size={24}

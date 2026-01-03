@@ -8,4 +8,16 @@ export default defineConfig({
   optimizeDeps: {
     include: ["qrcode.react"],
   },
+  build: {
+    chunkSizeWarningLimit: 1000, // Increase limit slightly to 1MB
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          leaflet: ["leaflet", "react-leaflet"],
+          utils: ["qrcode.react", "@yudiel/react-qr-scanner", "lucide-react"],
+        },
+      },
+    },
+  },
 });

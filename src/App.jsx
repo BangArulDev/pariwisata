@@ -15,6 +15,8 @@ import ARScannerScreen from "./components/ARScannerScreen";
 import MarketplaceScreen from "./components/MarketplaceScreen";
 import ProfileScreen from "./components/ProfileScreen";
 import InfoScreen from "./components/InfoScreen";
+import CartScreen from "./components/CartScreen";
+import CheckoutScreen from "./components/CheckoutScreen";
 import { destinations } from "./data/mockData";
 
 // Admin Components
@@ -97,12 +99,42 @@ function App() {
   };
 
   const addToCart = (product) => {
-    setCart((c) => [...c, product]);
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prevCart, { ...product, quantity: 1, cartId: Date.now() }];
+      }
+    });
+
     try {
-      alert(`${product.name} berhasil ditambahkan ke keranjang!`);
+      // alert(`${product.name} berhasil ditambahkan ke keranjang!`);
+      // Optional: Show toast notification instead of alert
     } catch (e) {
       console.warn(e);
     }
+  };
+
+  const updateQuantity = (cartId, newQuantity) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.cartId === cartId ? { ...item, quantity: newQuantity } : item
+      )
+    );
+  };
+
+  const removeFromCart = (cartId) => {
+    setCart((prevCart) => prevCart.filter((item) => item.cartId !== cartId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setActiveTab("home");
   };
 
   const renderContent = () => {
@@ -115,7 +147,6 @@ function App() {
         <ARScannerScreen
           onBack={() => handleTabChange("home")}
           onScanSuccess={handleScanSuccess}
-          // Props di bawah ini mungkin tidak lagi diperlukan sepenuhnya jika logika dihandle di App.jsx
           isScanning={isScanning}
           setIsScanning={setIsScanning}
           arFound={arFound}
@@ -146,12 +177,30 @@ function App() {
         return <MarketplaceScreen addToCart={addToCart} />;
       case "profile":
         return <ProfileScreen />;
+      case "cart":
+        return (
+          <CartScreen
+            cart={cart}
+            onBack={() => handleTabChange("market")}
+            onUpdateQuantity={updateQuantity}
+            onRemove={removeFromCart}
+            onCheckout={() => setActiveTab("checkout")}
+          />
+        );
+      case "checkout":
+        return (
+          <CheckoutScreen
+            cart={cart}
+            onBack={() => setActiveTab("cart")}
+            onConfrim={clearCart}
+          />
+        );
       default:
         return <HomeScreen onSelectSpot={setSelectedSpot} />;
     }
   };
 
-  // Hide main app UI if on admin routes (handled by Router above, but good for safety)
+  // Hide main app UI if on admin routes
   if (location.pathname.startsWith("/admin")) return null;
 
   return (
@@ -159,13 +208,48 @@ function App() {
       <DesktopHeader
         activeTab={activeTab}
         setActiveTab={handleTabChange}
-        cartCount={cart.length}
+        cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         goToProfile={() => handleTabChange("profile")}
+        goToCart={() => handleTabChange("cart")}
       />
       <main className="flex-1 w-full">{renderContent()}</main>
-      {!isScanning && !selectedSpot && (
-        <MobileNav activeTab={activeTab} setActiveTab={handleTabChange} />
-      )}
+      {!isScanning &&
+        !selectedSpot &&
+        activeTab !== "cart" &&
+        activeTab !== "checkout" && (
+          <MobileNav activeTab={activeTab} setActiveTab={handleTabChange} />
+        )}
+      {/* Floating Cart Button for Mobile */}
+      {!isScanning &&
+        !selectedSpot &&
+        activeTab === "market" &&
+        cart.length > 0 && (
+          <div className="md:hidden fixed bottom-20 right-4 z-50">
+            <button
+              onClick={() => handleTabChange("cart")}
+              className="bg-green-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center relative animate-bounce"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <path d="M3 6h18" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                {cart.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
+            </button>
+          </div>
+        )}
     </div>
   );
 }

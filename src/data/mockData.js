@@ -9,6 +9,7 @@ export const destinations = [
       "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     rating: 4.5,
     hasAR: false,
+    coordinates: { lat: -7.0694, lng: 110.8897 },
   },
   {
     id: 2,
@@ -20,6 +21,7 @@ export const destinations = [
       "https://images.unsplash.com/photo-1651079047808-1375d415fe85?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     rating: 4.2,
     hasAR: false,
+    coordinates: { lat: -7.1456, lng: 111.1167 },
   },
   {
     id: 3,
@@ -31,6 +33,7 @@ export const destinations = [
       "https://images.unsplash.com/photo-1566559631133-969041fc5583?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     rating: 4.8,
     hasAR: true,
+    coordinates: { lat: -7.0253, lng: 110.9231 },
   },
   {
     id: 4,
@@ -41,6 +44,7 @@ export const destinations = [
     image: "https://jatimterkini.com/wp-content/uploads/2024/09/Pic-1-1.jpg",
     rating: 4.6,
     hasAR: true,
+    coordinates: { lat: -7.1167, lng: 111.1347 },
   },
 ];
 

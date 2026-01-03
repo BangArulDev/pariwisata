@@ -1,8 +1,18 @@
-import React from "react";
-import { Search, Camera, MapPin, Star } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Search,
+  Camera,
+  MapPin,
+  Star,
+  Map as MapIcon,
+  List,
+} from "lucide-react";
 import { destinations } from "../data/mockData";
+import MapScreen from "./MapScreen";
 
 export default function HomeScreen({ onSelectSpot }) {
+  const [viewMode, setViewMode] = useState("list");
+
   return (
     <div className="pb-20 md:pb-8 max-w-7xl mx-auto w-full md:px-6">
       <div className="hidden md:block relative h-80 rounded-2xl overflow-hidden mb-8 shadow-lg mt-6">
@@ -65,69 +75,86 @@ export default function HomeScreen({ onSelectSpot }) {
       </div>
 
       <div className="px-4 md:px-0">
-        <div className="flex justify-between items-end mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Destinasi Populer</h2>
-          <span className="text-sm text-green-600 font-semibold cursor-pointer hover:underline">
-            Lihat Semua
-          </span>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">
+            {viewMode === "list" ? "Destinasi Populer" : "Peta Wisata"}
+          </h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode(viewMode === "list" ? "map" : "list")}
+              className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-full text-xs md:text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
+            >
+              {viewMode === "list" ? <MapIcon size={14} /> : <List size={14} />}
+              {viewMode === "list" ? "Lihat Peta" : "Lihat Daftar"}
+            </button>
+            {viewMode === "list" && (
+              <span className="text-sm text-green-600 font-semibold cursor-pointer hover:underline hidden md:inline">
+                Lihat Semua
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {destinations.map((spot) => (
-            <div
-              key={spot.id}
-              onClick={() => onSelectSpot(spot)}
-              className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden group cursor-pointer hover:shadow-md transition-all hover:-translate-y-1 flex md:flex-col h-28 md:h-auto"
-            >
-              <div className="w-28 md:w-full md:h-48 relative shrink-0">
-                <img
-                  src={spot.image}
-                  alt={spot.name}
-                  className="w-full h-full object-cover"
-                />
-                {spot.hasAR && (
-                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm p-1.5 rounded-lg text-white">
-                    <Camera size={16} />
-                  </div>
-                )}
-              </div>
+        {viewMode === "list" ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {destinations.map((spot) => (
+              <div
+                key={spot.id}
+                onClick={() => onSelectSpot(spot)}
+                className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden group cursor-pointer hover:shadow-md transition-all hover:-translate-y-1 flex md:flex-col h-28 md:h-auto"
+              >
+                <div className="w-28 md:w-full md:h-48 relative shrink-0">
+                  <img
+                    src={spot.image}
+                    alt={spot.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {spot.hasAR && (
+                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm p-1.5 rounded-lg text-white">
+                      <Camera size={16} />
+                    </div>
+                  )}
+                </div>
 
-              <div className="p-3 md:p-4 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-bold text-gray-800 text-sm md:text-lg line-clamp-1 group-hover:text-green-700 transition-colors">
-                      {spot.name}
-                    </h3>
-                    <span className="hidden md:flex bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md font-bold items-center">
-                      <Star size={12} className="mr-1 fill-current" />{" "}
+                <div className="p-3 md:p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-bold text-gray-800 text-sm md:text-lg line-clamp-1 group-hover:text-green-700 transition-colors">
+                        {spot.name}
+                      </h3>
+                      <span className="hidden md:flex bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md font-bold items-center">
+                        <Star size={12} className="mr-1 fill-current" />{" "}
+                        {spot.rating}
+                      </span>
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-500 mb-2">
+                      {spot.type}
+                    </p>
+                    <p className="hidden md:block text-sm text-gray-600 line-clamp-2 mb-3">
+                      {spot.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-gray-400 text-xs md:text-sm mt-1">
+                    <div className="flex items-center">
+                      <MapPin size={14} className="mr-1 text-red-500" />
+                      <span>{spot.distance || "2.4 km"}</span>
+                    </div>
+                    <span className="md:hidden flex items-center text-orange-500 font-bold">
+                      <Star size={12} className="mr-0.5 fill-current" />{" "}
                       {spot.rating}
                     </span>
+                    <span className="hidden md:block text-green-600 font-semibold">
+                      Detail →
+                    </span>
                   </div>
-                  <p className="text-xs md:text-sm text-gray-500 mb-2">
-                    {spot.type}
-                  </p>
-                  <p className="hidden md:block text-sm text-gray-600 line-clamp-2 mb-3">
-                    {spot.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between text-gray-400 text-xs md:text-sm mt-1">
-                  <div className="flex items-center">
-                    <MapPin size={14} className="mr-1 text-red-500" />
-                    <span>2.4 km</span>
-                  </div>
-                  <span className="md:hidden flex items-center text-orange-500 font-bold">
-                    <Star size={12} className="mr-0.5 fill-current" />{" "}
-                    {spot.rating}
-                  </span>
-                  <span className="hidden md:block text-green-600 font-semibold">
-                    Detail →
-                  </span>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <MapScreen onSelectSpot={onSelectSpot} />
+        )}
       </div>
 
       <div className="md:hidden mt-6 mx-4 bg-linear-to-r from-yellow-400 to-orange-500 rounded-xl p-4 text-white shadow-lg mb-6">
