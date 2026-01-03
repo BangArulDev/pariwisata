@@ -7,6 +7,9 @@ export default function DesktopHeader({
   cartCount,
   goToProfile,
   goToCart,
+  session,
+  goToLogin,
+  goToRegister,
 }) {
   return (
     <header className="hidden md:flex bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -62,15 +65,34 @@ export default function DesktopHeader({
               </span>
             )}
           </div>
-          <div
-            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-            onClick={goToProfile}
-          >
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-xs">
-              WS
+          {session ? (
+            <div
+              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              onClick={goToProfile}
+            >
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-xs uppercase border border-green-200">
+                {session.user.email ? session.user.email[0] : "U"}
+              </div>
+              <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
+                {session.user.user_metadata?.full_name || "Pengguna"}
+              </span>
             </div>
-            <span className="text-sm font-medium text-gray-700">Wisatawan</span>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={goToLogin}
+                className="text-sm font-bold text-gray-500 hover:text-green-600 transition-colors"
+              >
+                Masuk
+              </button>
+              <button
+                onClick={goToRegister}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition shadow-sm"
+              >
+                Daftar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

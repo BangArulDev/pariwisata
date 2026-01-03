@@ -17,6 +17,7 @@ import ProfileScreen from "./components/ProfileScreen";
 import InfoScreen from "./components/InfoScreen";
 import CartScreen from "./components/CartScreen";
 import CheckoutScreen from "./components/CheckoutScreen";
+import HistoryScreen from "./components/HistoryScreen";
 import { destinations } from "./data/mockData";
 
 // Admin Components
@@ -43,10 +44,39 @@ function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [arFound, setArFound] = useState(false);
   const [infoSpot, setInfoSpot] = useState(null);
+  const [session, setSession] = useState(null);
+  const [authMode, setAuthMode] = useState("login");
+
+  // Initialize transactions from localStorage
+  const [transactions, setTransactions] = useState(() => {
+    try {
+      const saved = localStorage.getItem("transactions");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const location = useLocation();
 
   useEffect(() => {
-    console.log("Supabase Client:", supabase);
+    localStorage.setItem("transactions", JSON.stringify(transactions));
+  }, [transactions]);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -72,6 +102,30 @@ function App() {
     } else {
       setIsScanning(false);
     }
+    if (tab !== "profile") {
+      setAuthMode("login");
+    }
+  };
+
+  const handleAuthNavigation = (mode) => {
+    setAuthMode(mode);
+    setActiveTab("profile");
+  };
+
+  const handleCheckoutSuccess = (orderData) => {
+    const newOrder = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      status: "Berhasil",
+      // If orderData is just an event or empty, use cart. But usually checkout passes data.
+      // CheckoutScreen passes nothing onConfirm based on current code, so we use cart state.
+      items: [...cart],
+      total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      ...orderData,
+    };
+    setTransactions((prev) => [...prev, newOrder]);
+    setCart([]);
+    setActiveTab("home");
   };
 
   const handleScanSuccess = (scannedData) => {
@@ -133,8 +187,16 @@ function App() {
   };
 
   const clearCart = () => {
-    setCart([]);
-    setActiveTab("home");
+    // This function is now a wrapper for handleCheckoutSuccess
+    handleCheckoutSuccess({});
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   const renderContent = () => {
@@ -176,7 +238,13 @@ function App() {
       case "market":
         return <MarketplaceScreen addToCart={addToCart} />;
       case "profile":
-        return <ProfileScreen />;
+        return (
+          <ProfileScreen
+            session={session}
+            onLogout={handleLogout}
+            initialAuthMode={authMode}
+          />
+        );
       case "cart":
         return (
           <CartScreen
@@ -211,6 +279,9 @@ function App() {
         cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         goToProfile={() => handleTabChange("profile")}
         goToCart={() => handleTabChange("cart")}
+        session={session}
+        goToLogin={() => handleAuthNavigation("login")}
+        goToRegister={() => handleAuthNavigation("register")}
       />
       <main className="flex-1 w-full">{renderContent()}</main>
       {!isScanning &&

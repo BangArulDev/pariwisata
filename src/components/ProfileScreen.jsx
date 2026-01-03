@@ -1,66 +1,89 @@
 import React from "react";
-import { ShoppingBag, Star, Navigation, Info, User, Menu } from "lucide-react";
+import {
+  ShoppingBag,
+  Star,
+  Navigation,
+  Info,
+  User,
+  Menu,
+  LogOut,
+  Loader,
+  Wallet,
+} from "lucide-react";
+import LoginScreen from "./LoginScreen";
 
-export default function ProfileScreen() {
+export default function ProfileScreen({
+  session,
+  onLogout,
+  initialAuthMode = "login",
+  onViewHistory,
+}) {
+  if (!session) {
+    return <LoginScreen initialMode={initialAuthMode} />;
+  }
+
+  const user = session.user;
+
+  const menuItems = [
+    {
+      icon: ShoppingBag,
+      label: "Riwayat Transaksi",
+      action: onViewHistory,
+    },
+    { icon: Star, label: "Ulasan Saya" },
+    { icon: Navigation, label: "Rute Tersimpan" },
+    { icon: Info, label: "Bantuan & Dukungan" },
+    { icon: User, label: "Edit Profil" },
+    { icon: Menu, label: "Pengaturan" },
+  ];
+
   return (
     <div className="pb-20 md:pb-8 max-w-4xl mx-auto w-full md:px-6 md:py-10 animate-slideUp">
       <div className="p-4 md:p-0">
-        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 md:flex md:items-center md:gap-8 mb-6">
+        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 md:flex md:items-center md:gap-8 mb-6 relative">
           <div className="flex items-center space-x-4 md:block md:text-center">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-green-100 rounded-full flex items-center justify-center text-4xl md:text-5xl shadow-inner border-4 border-white mx-auto">
-              😎
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-green-100 rounded-full flex items-center justify-center text-4xl md:text-5xl shadow-inner border-4 border-white mx-auto text-green-700">
+              {user.email ? user.email[0].toUpperCase() : "U"}
             </div>
             <div className="md:mt-4">
-              <h2 className="font-bold text-lg md:text-2xl text-gray-900">
-                Wisatawan Setia
+              <h2 className="font-bold text-lg md:text-2xl text-gray-900 line-clamp-1">
+                {user.user_metadata?.full_name ||
+                  user.email?.split("@")[0] ||
+                  "Pengguna"}
               </h2>
-              <p className="text-xs md:text-sm text-gray-500">
-                Bergabung sejak 2025
-              </p>
+              <p className="text-xs md:text-sm text-gray-500">{user.email}</p>
             </div>
           </div>
           <div className="mt-4 md:mt-0 md:flex-1 md:border-l md:border-gray-100 md:pl-8">
-            <div className="bg-linear-to-r from-green-600 to-green-500 rounded-xl p-4 text-white relative overflow-hidden shadow-lg">
+            <div className="bg-linear-to-r from-green-600 to-green-500 rounded-xl p-4 text-white relative overflow-hidden shadow-lg mb-4">
               <div className="relative z-10 flex justify-between items-center">
                 <div>
                   <p className="text-xs opacity-80 mb-1">Level Keanggotaan</p>
                   <h3 className="font-bold text-lg">Penjelajah Budaya</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold">240</p>
+                  <p className="text-2xl font-bold">0</p>
                   <p className="text-[10px]">Poin Terkumpul</p>
                 </div>
               </div>
               <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/20 rounded-full"></div>
             </div>
-            <div className="flex gap-4 mt-4">
-              <div className="flex-1 bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
-                <p className="text-gray-400 text-xs">Transaksi</p>
-                <p className="font-bold text-gray-800">12</p>
-              </div>
-              <div className="flex-1 bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
-                <p className="text-gray-400 text-xs">Ulasan</p>
-                <p className="font-bold text-gray-800">5</p>
-              </div>
-              <div className="flex-1 bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
-                <p className="text-gray-400 text-xs">Disimpan</p>
-                <p className="font-bold text-gray-800">8</p>
-              </div>
-            </div>
+
+            <button
+              onClick={onLogout}
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
+            >
+              <LogOut size={16} />
+              Keluar Aplikasi
+            </button>
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          {[
-            { icon: ShoppingBag, label: "Riwayat Transaksi" },
-            { icon: Star, label: "Ulasan Saya" },
-            { icon: Navigation, label: "Rute Tersimpan" },
-            { icon: Info, label: "Bantuan & Dukungan" },
-            { icon: User, label: "Edit Profil" },
-            { icon: Menu, label: "Pengaturan" },
-          ].map((item, idx) => (
+          {menuItems.map((item, idx) => (
             <div
               key={idx}
+              onClick={item.action}
               className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 hover:border-green-200 hover:shadow-sm transition-all group"
             >
               <div className="flex items-center space-x-4">
