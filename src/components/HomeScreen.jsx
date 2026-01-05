@@ -153,7 +153,7 @@ export default function HomeScreen({ onSelectSpot, destinations }) {
             ))}
           </div>
         ) : (
-          <MapScreen onSelectSpot={onSelectSpot} />
+          <MapScreen onSelectSpot={onSelectSpot} destinations={destinations} />
         )}
       </div>
 

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { destinations } from "../data/mockData";
 import { MapPin, ArrowRight } from "lucide-react";
 
 // Fix Leaflet marker icon issue in React
@@ -30,7 +29,7 @@ function ChangeView({ center, zoom }) {
   return null;
 }
 
-export default function MapScreen({ onSelectSpot }) {
+export default function MapScreen({ onSelectSpot, destinations = [] }) {
   const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {

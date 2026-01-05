@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowRight,
   Camera,
@@ -8,7 +8,7 @@ import {
   QrCode,
   Star,
 } from "lucide-react";
-import { products } from "../data/mockData";
+import { supabase } from "../supabaseClient";
 import { ReviewList, ReviewForm } from "./ReviewComponents";
 
 export default function SpotDetail({
@@ -18,6 +18,26 @@ export default function SpotDetail({
   addToCart,
   onShowQr,
 }) {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .limit(5);
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (err) {
+      console.error("Error loading products:", err);
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen pb-20 md:pb-0 animate-slideUp">
       <div className="md:max-w-6xl md:mx-auto md:py-8 md:px-6 md:grid md:grid-cols-2 md:gap-10">
@@ -107,7 +127,9 @@ export default function SpotDetail({
                   >
                     <div className="h-28 rounded-lg overflow-hidden mb-3 bg-gray-100">
                       <img
-                        src={prod.image}
+                        src={
+                          prod.image_url || "https://via.placeholder.com/150"
+                        }
                         className="w-full h-full object-cover hover:scale-105 transition-transform"
                       />
                     </div>
@@ -116,11 +138,11 @@ export default function SpotDetail({
                     </p>
                     <p className="text-[10px] text-gray-500 truncate mb-2 flex items-center">
                       <MapPin size={10} className="mr-1" />
-                      {prod.location}
+                      {prod.seller_name || "Grobogan"}
                     </p>
                     <div className="mt-auto flex justify-between items-center">
                       <p className="text-sm text-green-700 font-bold">
-                        Rp {prod.price / 1000}rb
+                        Rp {(prod.price / 1000).toFixed(0)}rb
                       </p>
                       <button
                         onClick={() => addToCart(prod)}
