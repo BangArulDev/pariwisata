@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
-import { User, Mail, Lock, LogIn, ArrowRight } from "lucide-react";
+import { User, Mail, Lock, Store, ArrowRight, Briefcase } from "lucide-react";
 
 export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
   const [isLogin, setIsLogin] = useState(initialMode === "login");
+  const [userType, setUserType] = useState("user"); // "user" or "umkm"
+
+  // Form States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [businessName, setBusinessName] = useState(""); // For UMKM
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
@@ -33,24 +38,33 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
         if (onLoginSuccess) onLoginSuccess(data.session);
       } else {
         // REGISTER
+        const metaData = {
+          full_name: name,
+          phone: phone,
+          role: userType, // 'user' or 'umkm'
+        };
+
+        if (userType === "umkm") {
+          metaData.business_name = businessName;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: {
-              full_name: name,
-              phone: phone,
-            },
+            data: metaData,
           },
         });
+
         if (error) throw error;
         setMessage(
           "Registrasi berhasil! Silakan cek email Anda untuk verifikasi (jika diaktifkan) atau langsung login."
         );
+
+        // Auto-login only if session is returned immediately
         if (data.session) {
           if (onLoginSuccess) onLoginSuccess(data.session);
         } else {
-          // Sometimes signUp doesn't return session immediately if email confirmation is on
           setIsLogin(true);
         }
       }
@@ -64,17 +78,61 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
   return (
     <div className="pb-20 md:pb-8 w-full max-w-md mx-auto px-6 py-10 animate-slideUp">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-8 text-center bg-gray-50 border-b border-gray-100">
-          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl border-4 border-white shadow-sm">
-            <User size={32} />
+        {/* Type Switcher */}
+        <div className="flex border-b border-gray-100">
+          <button
+            onClick={() => {
+              setUserType("user");
+              setError(null);
+            }}
+            className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
+              userType === "user"
+                ? "bg-green-50 text-green-600 border-b-2 border-green-600"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            <User size={18} />
+            Pengguna
+          </button>
+          <button
+            onClick={() => {
+              setUserType("umkm");
+              setError(null);
+            }}
+            className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${
+              userType === "umkm"
+                ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            <Store size={18} />
+            Mitra UMKM
+          </button>
+        </div>
+
+        <div className="p-8 text-center bg-gray-50/50 border-b border-gray-100">
+          <div
+            className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl border-4 border-white shadow-sm ${
+              userType === "user"
+                ? "bg-green-100 text-green-600"
+                : "bg-blue-100 text-blue-600"
+            }`}
+          >
+            {userType === "user" ? <User size={32} /> : <Briefcase size={32} />}
           </div>
           <h2 className="text-2xl font-bold text-gray-800">
-            {isLogin ? "Selamat Datang Kembali" : "Buat Akun Baru"}
+            {isLogin
+              ? `Masuk sebagai ${userType === "user" ? "Pengguna" : "Mitra"}`
+              : `Daftar sebagai ${
+                  userType === "user" ? "Pengguna" : "Mitra UMKM"
+                }`}
           </h2>
           <p className="text-sm text-gray-500 mt-1">
             {isLogin
-              ? "Masuk untuk mengakses fitur lengkap"
-              : "Bergabunglah dengan komunitas kami"}
+              ? "Masuk untuk mengakses akun Anda"
+              : userType === "user"
+              ? "Jelajahi wisata Grobogan dengan lebih mudah"
+              : "Pasarkan produk lokal Anda ke wisatawan"}
           </p>
         </div>
 
@@ -109,10 +167,34 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
-                      placeholder="Nama Lengkap Anda"
+                      placeholder={
+                        userType === "user" ? "Nama Anda" : "Nama Pemilik"
+                      }
                     />
                   </div>
                 </div>
+
+                {userType === "umkm" && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
+                      Nama Usaha (Brand)
+                    </label>
+                    <div className="relative">
+                      <Store
+                        size={18}
+                        className="absolute left-3 top-3 text-gray-400"
+                      />
+                      <input
+                        type="text"
+                        required
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        placeholder="Contoh: Keripik Tempe Mbah Joyo"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
@@ -146,7 +228,11 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 outline-none transition-all ${
+                    userType === "user"
+                      ? "focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                      : "focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  }`}
                   placeholder="nama@email.com"
                 />
               </div>
@@ -167,7 +253,11 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={6}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 outline-none transition-all ${
+                    userType === "user"
+                      ? "focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                      : "focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  }`}
                   placeholder="••••••••"
                 />
               </div>
@@ -176,7 +266,11 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center mt-6"
+              className={`w-full font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center mt-6 text-white ${
+                userType === "user"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
             >
               {loading ? (
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -198,7 +292,9 @@ export default function LoginScreen({ onLoginSuccess, initialMode = "login" }) {
                   setError(null);
                   setMessage(null);
                 }}
-                className="text-green-600 font-bold hover:underline"
+                className={`font-bold hover:underline ${
+                  userType === "user" ? "text-green-600" : "text-blue-600"
+                }`}
               >
                 {isLogin ? "Daftar disini" : "Login disini"}
               </button>

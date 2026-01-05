@@ -9,6 +9,7 @@ import {
   LogOut,
   Loader,
   Wallet,
+  Store,
 } from "lucide-react";
 import LoginScreen from "./LoginScreen";
 import { supabase } from "../supabaseClient";
@@ -58,6 +59,15 @@ export default function ProfileScreen({
     { icon: Star, label: "Ulasan Saya", action: onViewReviews },
     { icon: Navigation, label: "Rute Tersimpan" },
     { icon: Info, label: "Bantuan & Dukungan" },
+    ...(profile?.role === "umkm"
+      ? [
+          {
+            icon: Store,
+            label: "Kelola Toko (Dashboard)",
+            action: () => (window.location.href = "/admin/dashboard"), // Use full reload or navigate if available passing prop
+          },
+        ]
+      : []),
     {
       icon: User,
       label: "Edit Profil",
@@ -93,23 +103,52 @@ export default function ProfileScreen({
                   user.email?.split("@")[0] ||
                   "Pengguna"}
               </h2>
-              <p className="text-xs md:text-sm text-gray-500">{user.email}</p>
-              {profile?.role === "admin" && (
-                <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded">
-                  ADMIN
-                </span>
+              {profile?.business_name && (
+                <p className="text-sm font-semibold text-blue-600 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
+                  {profile.business_name}
+                </p>
               )}
+              <p className="text-xs md:text-sm text-gray-500">{user.email}</p>
+
+              <div className="flex gap-2 mt-2">
+                {profile?.role === "admin" && (
+                  <span className="inline-block px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded border border-red-200">
+                    ADMIN
+                  </span>
+                )}
+                {profile?.role === "umkm" && (
+                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded border border-blue-200">
+                    MITRA UMKM
+                  </span>
+                )}
+                {(!profile?.role || profile?.role === "user") && (
+                  <span className="inline-block px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded border border-green-200">
+                    PENGGUNA
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="mt-4 md:mt-0 md:flex-1 md:border-l md:border-gray-100 md:pl-8">
-            <div className="bg-linear-to-r from-green-600 to-green-500 rounded-xl p-4 text-white relative overflow-hidden shadow-lg mb-4">
+            <div
+              className={`rounded-xl p-4 text-white relative overflow-hidden shadow-lg mb-4 ${
+                profile?.role === "umkm"
+                  ? "bg-linear-to-r from-blue-600 to-blue-500"
+                  : "bg-linear-to-r from-green-600 to-green-500"
+              }`}
+            >
               <div className="relative z-10 flex justify-between items-center">
                 <div>
-                  <p className="text-xs opacity-80 mb-1">Level Keanggotaan</p>
-                  <h3 className="font-bold text-lg">Penjelajah Budaya</h3>
+                  <p className="text-xs opacity-80 mb-1">Status Akun</p>
+                  <h3 className="font-bold text-lg">
+                    {profile?.role === "umkm"
+                      ? "Verified Partner"
+                      : "Penjelajah Budaya"}
+                  </h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">{profile?.points || 0}</p>
                   <p className="text-[10px]">Poin Terkumpul</p>
                 </div>
               </div>

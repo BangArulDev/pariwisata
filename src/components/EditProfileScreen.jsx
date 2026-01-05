@@ -35,6 +35,8 @@ export default function EditProfileScreen({ session, onBack }) {
               fullName: data.full_name || "",
               phone: data.phone || "",
               avatarUrl: data.avatar_url || "",
+              role: data.role || "user",
+              businessName: data.business_name || "",
             });
           }
         } catch (error) {
@@ -99,6 +101,7 @@ export default function EditProfileScreen({ session, onBack }) {
         full_name: formData.fullName,
         phone: formData.phone,
         avatar_url: avatarUrl,
+        business_name: formData.businessName,
         updated_at: new Date(),
       };
 
@@ -212,6 +215,28 @@ export default function EditProfileScreen({ session, onBack }) {
             </div>
           </div>
 
+          {(formData.role === "umkm" || formData.businessName) && (
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
+                Nama Usaha (Brand UMKM)
+              </label>
+              <div className="relative">
+                <User
+                  size={18}
+                  className="absolute left-3 top-3 text-gray-400"
+                />
+                <input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName || ""}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                  placeholder="Nama Bisnis Anda"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">
               Nomor Telepon
@@ -235,7 +260,11 @@ export default function EditProfileScreen({ session, onBack }) {
           <button
             type="submit"
             disabled={loading || uploading}
-            className="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
+            className={`w-full font-bold py-3 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all flex items-center justify-center mt-6 disabled:opacity-70 disabled:cursor-not-allowed text-white ${
+              formData.role === "umkm"
+                ? "bg-blue-600"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
           >
             {loading || uploading ? (
               <>
